@@ -8,4 +8,9 @@ This repository is free to use under the terms of the included license.
 This is a simple website that displays a map showing the Alliance map for the WoW housing system. The map includes plot numbers on top of the available houses, making it easy to see which houses are available and which are taken.
 
 ## How to customize
-To edit the names of the houses that are taken, simply edit the array called `housingData` in the code.
+To edit the names of the houses that are taken, simply edit the array called `housingData` in the code.+
+
+## Credits
+Plot images courtesy of [wizardriesx](https://x.com/wizardriesx) on Twitter.
+[Horde](https://x.com/wizardriesx/status/1978998444665528723)
+[Alliance](https://x.com/wizardriesx/status/1979006274369896649)
