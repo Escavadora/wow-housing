@@ -1,19 +1,33 @@
 <?php
 // Do not force a JSON header here; choose per-request so opening this URL in a browser
 // (which typically accepts text/html) does not produce a MIME-type warning.
+// Must be before any output
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, X-Requested-With, Authorization');
+header('Access-Control-Max-Age: 86400');
 
-// Respond to preflight requests immediately
+// Debug logging (server error log)
+error_log("api.php invoked METHOD=" . ($_SERVER['REQUEST_METHOD'] ?? ''));
+error_log("REQUEST_URI=" . ($_SERVER['REQUEST_URI'] ?? ''));
+
+// Immediately handle preflight
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(204);
     exit();
 }
 
+// If PHP never receives POST this block will not run — curl bypass to origin will confirm
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $raw = file_get_contents('php://input');
+    error_log("api.php POST body: " . substr($raw, 0, 1000));
+    header('Content-Type: application/json');
+    echo json_encode(['ok' => true, 'msg' => 'received POST']);
+    exit();
+}
+
 function sendJson($data) {
     header('Content-Type: application/json; charset=utf-8');
-    header("Access-Control-Allow-Origin: *");
-    header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-    header("Access-Control-Allow-Headers: Content-Type, X-Requested-With, Authorization");
-    header("Access-Control-Max-Age: 86400");
     // API responses should not be aggressively cached by clients to ensure freshness
     header('Cache-Control: no-cache, no-store, must-revalidate');
     header('Pragma: no-cache');
