@@ -351,19 +351,12 @@
 
         function loadOverridesFromLocal() {
             try {
-                const raw = localStorage.getItem('housing_overrides_by_map');
-                if (raw) housingOverridesByMap = JSON.parse(raw); else {
-                    const old = localStorage.getItem('housing_overrides');
-                    if (old) {
-                        try {
-                            const parsed = JSON.parse(old);
-                            housingOverridesByMap = { 'alliance_map.jpg': parsed };
-                            localStorage.removeItem('housing_overrides');
-                        } catch (e) { housingOverridesByMap = {}; }
-                    } else {
-                        housingOverridesByMap = {};
-                    }
-                }
+                const rawInt = localStorage.getItem('housing_overrides_by_map');
+                if (rawInt) {
+                    housingOverridesByMap = JSON.parse(rawInt);
+                    // if it was accidentally stored as an array, coerce to object
+                    if (Array.isArray(housingOverridesByMap)) housingOverridesByMap = {};
+                } else housingOverridesByMap = {};
             } catch (e) { housingOverridesByMap = {}; }
             try {
                 const rawInt = localStorage.getItem('housing_interested_by_map');
