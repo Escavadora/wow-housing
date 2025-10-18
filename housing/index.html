@@ -298,12 +298,52 @@
             }
         }
 
+        async function tryLoadFromDataFolder() {
+            try {
+                // Try to load two files in parallel: overrides.json and interested.json
+                const [oRes, iRes] = await Promise.allSettled([
+                    fetch('data/housing_interested_by_map.json'),
+                    fetch('data/housing_overrides_by_map.json')
+                ]);
+                let loaded = false;
+                if (oRes.status === 'fulfilled' && oRes.value && oRes.value.ok) {
+                    try {
+                        const overrides = await oRes.value.json();
+                        if (overrides && typeof overrides === 'object' && !Array.isArray(overrides)) {
+                            housingOverridesByMap = overrides;
+                            loaded = true;
+                        }
+                    } catch (e) { /* ignore parse errors */ }
+                }
+                if (iRes.status === 'fulfilled' && iRes.value && iRes.value.ok) {
+                    try {
+                        const interestedRaw = await iRes.value.json();
+                        if (interestedRaw && typeof interestedRaw === 'object') {
+                            housingInterestedByMap = normalizeInterestedMap(interestedRaw);
+                            loaded = true;
+                        }
+                    } catch (e) { /* ignore parse errors */ }
+                }
+                if (loaded) {
+                    try { localStorage.setItem('housing_overrides_by_map', JSON.stringify(housingOverridesByMap)); } catch (e) {}
+                    try { localStorage.setItem('housing_interested_by_map', JSON.stringify(housingInterestedByMap)); } catch (e) {}
+                    console.log('Loaded overrides/interested from data folder', housingOverridesByMap, housingInterestedByMap);
+                    return true;
+                }
+            } catch (e) {
+                // ignore and return false to let caller fallback further
+            }
+            return false;
+        }
+        
         async function loadOverrides() {
             try {
-                // Try to load from server API first. If it fails, fall back to localStorage.
+                // Try to load from server API first. If it fails, fall back to data folder then localStorage.
                 const r = await fetch('api.php?action=');
                 if (!r.ok) {
-                    loadOverridesFromLocal();
+                    // try data folder
+                    const fromData = await tryLoadFromDataFolder();
+                    if (!fromData) loadOverridesFromLocal();
                     return;
                 }
                 const result = await r.json();
@@ -316,12 +356,14 @@
                     try { localStorage.setItem('housing_overrides_by_map', JSON.stringify(housingOverridesByMap)); } catch (e) {}
                     try { localStorage.setItem('housing_interested_by_map', JSON.stringify(housingInterestedByMap)); } catch (e) {}
                 } else {
-                    // fallback to localStorage
-                    loadOverridesFromLocal();
+                    // fallback to data folder then localStorage
+                    const fromData = await tryLoadFromDataFolder();
+                    if (!fromData) loadOverridesFromLocal();
                 }
             } catch (err) {
-                console.warn('Server API load failed, falling back to localStorage', err);
-                loadOverridesFromLocal();
+                console.warn('Server API load failed, falling back to data folder/localStorage', err);
+                const fromData = await tryLoadFromDataFolder();
+                if (!fromData) loadOverridesFromLocal();
             }
         }
 
