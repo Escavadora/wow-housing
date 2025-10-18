@@ -351,21 +351,46 @@
 
         function loadOverridesFromLocal() {
             try {
-                const rawInt = localStorage.getItem('housing_overrides_by_map');
-                if (rawInt) {
-                    housingOverridesByMap = JSON.parse(rawInt);
-                    // if it was accidentally stored as an array, coerce to object
-                    if (Array.isArray(housingOverridesByMap)) housingOverridesByMap = {};
-                } else housingOverridesByMap = {};
-            } catch (e) { housingOverridesByMap = {}; }
+                const raw = localStorage.getItem('housing_overrides_by_map');
+                if (raw) {
+                    let parsed;
+                    try { parsed = JSON.parse(raw); } catch (e) { parsed = {}; }
+                    // Coerce legacy arrays to an empty object (or add migration here if you want to preserve data)
+                    if (Array.isArray(parsed)) {
+                        housingOverridesByMap = {};
+                    } else if (parsed && typeof parsed === 'object') {
+                        housingOverridesByMap = parsed;
+                    } else {
+                        housingOverridesByMap = {};
+                    }
+                } else {
+                    housingOverridesByMap = {};
+                }
+            } catch (e) {
+                housingOverridesByMap = {};
+            }
+
             try {
-                const rawInt = localStorage.getItem('housing_interested_by_map');
-                if (rawInt) {
-                    housingInterestedByMap = JSON.parse(rawInt);
-                    // if it was accidentally stored as an array, coerce to object
-                    if (Array.isArray(housingInterestedByMap)) housingInterestedByMap = {};
-                } else housingInterestedByMap = {};
-            } catch (e) { housingInterestedByMap = {}; }
+                const raw = localStorage.getItem('housing_interested_by_map');
+                if (raw) {
+                    let parsed;
+                    try { parsed = JSON.parse(raw); } catch (e) { parsed = {}; }
+                    if (Array.isArray(parsed)) {
+                        // Top-level array is probably a legacy/malformed value — drop or migrate if you have a known mapping
+                        housingInterestedByMap = {};
+                    } else if (parsed && typeof parsed === 'object') {
+                        // Normalize per-map arrays -> objects { plotNumber: value }
+                        housingInterestedByMap = normalizeInterestedMap(parsed);
+                    } else {
+                        housingInterestedByMap = {};
+                    }
+                } else {
+                    housingInterestedByMap = {};
+                }
+            } catch (e) {
+                housingInterestedByMap = {};
+            }
+
             console.log('Loaded overrides/interested from localStorage', housingOverridesByMap, housingInterestedByMap);
         }
 
