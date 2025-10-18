@@ -1,6 +1,16 @@
 <?php
 // Do not force a JSON header here; choose per-request so opening this URL in a browser
 // (which typically accepts text/html) does not produce a MIME-type warning.
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, X-Requested-With, Authorization");
+header("Access-Control-Max-Age: 86400");
+
+// Respond to preflight requests immediately
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit();
+}
 
 function sendJson($data) {
     header('Content-Type: application/json; charset=utf-8');
